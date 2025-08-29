@@ -1,0 +1,49 @@
+name: Generate release with e-books
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  
+  workflow_dispatch: {}  # For manual switch.
+
+jobs:
+  release_ebooks:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Export all supported book formats from the Docker container
+        run: |
+          make run
+          make export
+  
+      - name: Copy generated files to host system and clean up
+        run: |
+          make cp
+          mkdir -p artifacts/
+          mv book.pdf book.epub book.mobi artifacts/
+
+      # Create environment variables for convenience.
+      # GITHUB_ENV stores the env variables between steps.
+      - name: Get commit hash and create filename prefix
+        run: |
+          echo "commit=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Create a GitHubrelease
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "artifacts/*"
+          generateReleaseNotes: true
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+          tag: "${{ env.commit }}"
+          commit: "master"
