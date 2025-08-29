@@ -1,0 +1,33 @@
+name: Linux Insides Build Pipeline
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build_book:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Export all supported book formats from the Docker container
+        run: |
+          make run
+          make export
+  
+      - name: Copy generated files to host system and clean up
+        run: |
+          make cp
+          mkdir -p artifacts/
+          mv book.pdf book.epub book.mobi artifacts/
+
+      - name: Upload generated files as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-insides-book-artifacts
+          path: artifacts/

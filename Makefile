@@ -33,9 +33,22 @@ rm: ## remove the docker container ...
 logs: ## gather logs from the docker container ...
 	docker logs linux-insides-book
 
+.PHONY: export
+export: ## run book generation inside an already running docker container ...
+	docker exec linux-insides-book /bin/bash -c " \
+	gitbook epub; \
+	gitbook mobi; \
+	gitbook pdf; \
+	mv book.pdf book-A5.pdf; \
+	mv book-A4.json book.json; \
+	gitbook pdf"
+
 .PHONY: cp
-cp: ## copy exported PDF book to current working directory ...
-	docker cp linux-insides-book:/srv/gitbook/book.pdf .
+cp: ## copy all exported book formats to current working directory ...
+	docker cp linux-insides-book:/srv/gitbook/book.epub .
+	docker cp linux-insides-book:/srv/gitbook/book.mobi .
+	docker cp linux-insides-book:/srv/gitbook/book-A5.pdf book.pdf
+	docker cp linux-insides-book:/srv/gitbook/book.pdf book-A4.pdf
 
 ### LAUNCH BROWSER
 
